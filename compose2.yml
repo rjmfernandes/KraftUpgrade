@@ -1,0 +1,201 @@
+---
+version: "3.5"
+services:
+  zookeeper1:
+    image: confluentinc/cp-zookeeper:${TAG}
+    ports:
+      - "2181:2181"
+    environment:
+      - ZOOKEEPER_SERVER_ID=1
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+      - ZOOKEEPER_INIT_LIMIT=5
+      - ZOOKEEPER_SYNC_LIMIT=2
+      - ZOOKEEPER_SERVERS=zookeeper1:2888:3888;zookeeper2:2888:3888;zookeeper3:2888:3888
+  zookeeper2:
+    image: confluentinc/cp-zookeeper:${TAG}
+    ports:
+      - "2182:2182"
+    environment:
+      - ZOOKEEPER_SERVER_ID=2
+      - ZOOKEEPER_CLIENT_PORT=2182
+      - ZOOKEEPER_TICK_TIME=2000
+      - ZOOKEEPER_INIT_LIMIT=5
+      - ZOOKEEPER_SYNC_LIMIT=2
+      - ZOOKEEPER_SERVERS=zookeeper1:2888:3888;zookeeper2:2888:3888;zookeeper3:2888:3888
+  zookeeper3:
+    image: confluentinc/cp-zookeeper:${TAG}
+    ports:
+      - "2183:2183"
+    environment:
+      - ZOOKEEPER_SERVER_ID=3
+      - ZOOKEEPER_CLIENT_PORT=2183
+      - ZOOKEEPER_TICK_TIME=2000
+      - ZOOKEEPER_INIT_LIMIT=5
+      - ZOOKEEPER_SYNC_LIMIT=2
+      - ZOOKEEPER_SERVERS=zookeeper1:2888:3888;zookeeper2:2888:3888;zookeeper3:2888:3888
+
+  kafka1:
+    image: confluentinc/cp-server:${TAG}
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+    ports:
+      - "19092:19092"
+    volumes:
+      - ./data1:/var/lib/kafka/data
+      - ./scripts/launch.sh:/etc/confluent/docker/launch
+      #keep only one of the following properties files uncommented at each step
+      #start
+      - ./templates/kafka-broker.properties:/etc/kafka/my.properties
+      #enable migration
+      #- ./templates/kafka-broker-enable-migration.properties:/etc/kafka/my.properties
+      #migrate
+      #- ./templates/kafka-broker-migrate.properties:/etc/kafka/my.properties
+      - ./broker:/etc/kafka/
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:2182,zookeeper3:2183
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      KAFKA_BROKER_ID: 1
+      KAFKA_NODE_ID: 1
+      KAFKA_LOG4J_LOGGERS: org.apache.kafka.metadata.migration=TRACE,org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+      CONFLUENT_LOG4J_LOGGERS: org.apache.kafka.metadata.migration=TRACE,org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://localhost:19092
+      KAFKA_INTER_BROKER_PROTOCOL_VERSION: 3.6
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+
+
+  controller1:
+    image: confluentinc/cp-server:${TAG}
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./data11:/var/lib/kafka/data
+      #only at last to take kraft controllers our of migration mode 
+      #uncomment the following two lines, and comment the third run line
+      #- ./scripts/launch.sh:/etc/confluent/docker/launch
+      #- ./templates/controller1.properties:/etc/kafka/my.properties
+      - ./scripts/run.sh:/etc/confluent/docker/run
+      - ./templates/kafka-controller.properties:/etc/kafka/kafka.properties.template
+      - ./controller1:/etc/kafka/
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:2182,zookeeper3:2183
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      #BROKER-CONTROLLER-CONFIG
+      KAFKA_BROKER_ID: 11
+      KAFKA_NODE_ID: 11
+      KAFKA_LOG4J_LOGGERS: org.apache.kafka.metadata.migration=TRACE,org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+      CONFLUENT_LOG4J_LOGGERS: org.apache.kafka.metadata.migration=TRACE,org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 11@controller1:9093,12@controller2:9093,13@controller3:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_ZOOKEEPER_METADATA_MIGRATION_ENABLE: 'true'
+      KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: 'true'
+      #ADD CONTROLLER LISTENER
+      KAFKA_LISTENERS: CONTROLLER://:9093
+      CLUSTER_ID: ${CLUSTER_ID}
+
+
+  controller2:
+    image: confluentinc/cp-server:${TAG}
+    ports:
+      - "9094:9093"
+    volumes:
+      - ./data12:/var/lib/kafka/data
+      #only at last to take kraft controllers our of migration mode 
+      #uncomment the following two lines, and comment the third run line
+      #- ./scripts/launch.sh:/etc/confluent/docker/launch
+      #- ./templates/controller2.properties:/etc/kafka/my.properties
+      - ./scripts/run.sh:/etc/confluent/docker/run
+      - ./templates/kafka-controller.properties:/etc/kafka/kafka.properties.template
+      - ./controller2:/etc/kafka/
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:2182,zookeeper3:2183
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      #BROKER-CONTROLLER-CONFIG
+      KAFKA_BROKER_ID: 12
+      KAFKA_NODE_ID: 12
+      KAFKA_LOG4J_LOGGERS: org.apache.kafka.metadata.migration=TRACE,org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+      CONFLUENT_LOG4J_LOGGERS: org.apache.kafka.metadata.migration=TRACE,org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 11@controller1:9093,12@controller2:9093,13@controller3:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_ZOOKEEPER_METADATA_MIGRATION_ENABLE: 'true'
+      KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: 'true'
+      #ADD CONTROLLER LISTENER
+      KAFKA_LISTENERS: CONTROLLER://:9093
+      CLUSTER_ID: ${CLUSTER_ID}
+
+  controller3:
+    image: confluentinc/cp-server:${TAG}
+    ports:
+      - "9095:9093"
+    volumes:
+      - ./data13:/var/lib/kafka/data
+      #only at last to take kraft controllers our of migration mode 
+      #uncomment the following two lines, and comment the third run line
+      #- ./scripts/launch.sh:/etc/confluent/docker/launch
+      #- ./templates/controller3.properties:/etc/kafka/my.properties
+      - ./scripts/run.sh:/etc/confluent/docker/run
+      - ./templates/kafka-controller.properties:/etc/kafka/kafka.properties.template
+      - ./controller3:/etc/kafka/
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181,zookeeper2:2182,zookeeper3:2183
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      #BROKER-CONTROLLER-CONFIG
+      KAFKA_BROKER_ID: 13
+      KAFKA_NODE_ID: 13
+      KAFKA_LOG4J_LOGGERS: org.apache.kafka.metadata.migration=TRACE,org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+      CONFLUENT_LOG4J_LOGGERS: org.apache.kafka.metadata.migration=TRACE,org.apache.zookeeper=ERROR,org.apache.kafka=ERROR,kafka=ERROR,kafka.cluster=ERROR,kafka.controller=ERROR,kafka.coordinator=ERROR,kafka.log=ERROR,kafka.server=ERROR,kafka.zookeeper=ERROR,state.change.logger=ERROR
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 11@controller1:9093,12@controller2:9093,13@controller3:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_ZOOKEEPER_METADATA_MIGRATION_ENABLE: 'true'
+      KAFKA_CONFLUENT_CLUSTER_LINK_METADATA_TOPIC_ENABLE: 'true'
+      #ADD CONTROLLER LISTENER
+      KAFKA_LISTENERS: CONTROLLER://:9093
+      CLUSTER_ID: ${CLUSTER_ID}
+
+      
+
+      
