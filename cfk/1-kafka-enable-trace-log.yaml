@@ -1,0 +1,20 @@
+---
+apiVersion: platform.confluent.io/v1beta1
+kind: Kafka
+metadata:
+  name: kafka
+  namespace: confluent
+spec:
+  replicas: 1
+  image:
+    application: confluentinc/cp-server:7.6.0
+    init: confluentinc/confluent-init-container:2.8.0
+  dataVolumeCapacity: 20Gi
+  metricReporter:
+    enabled: true
+  configOverrides:
+    log4j:
+      - log4j.logger.org.apache.kafka.metadata.migration=TRACE
+  dependencies:
+    zookeeper:
+      endpoint: zookeeper.confluent.svc.cluster.local:2181
