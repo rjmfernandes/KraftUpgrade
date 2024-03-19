@@ -89,7 +89,7 @@ kubectl apply -f 2-controller.yaml
 kubectl apply -f 3-migration-job.yaml
 ```
 
-Right after execute next step.
+Right after execute next step for monitoring the migration job.
 
 ```bash
 kubectl get kraftmigrationjob kraftmigrationjob -n confluent -oyaml -w
