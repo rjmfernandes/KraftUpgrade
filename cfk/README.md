@@ -144,7 +144,7 @@ kubectl annotate kraftmigrationjob kraftmigrationjob \
 
 # 9. Update your CI/CD as necessary
 
-The migration job mpdifies the yaml representation of Kafka and KRaft CRs. For downloading the updated definitions:
+The migration job modifies the yaml representation of Kafka and KRaft CRs. For downloading the updated definitions:
 
 ```bash
 kubectl get kafka <Kafka CR name> -n <namespace> -oyaml > updated_kafka.yaml
