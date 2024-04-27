@@ -104,7 +104,7 @@ On another terminal check pods:
 kubectl get pods
 ```
 
-You should see pods for controllers getting created and pods restarting.
+You should see pods for controllers getting created and pods restarting (here it's where the KRaft controllers are deployed).
 
 Finally on the terminal you were monitoring the migration process you should see:
 
@@ -135,10 +135,21 @@ kubectl annotate kraftmigrationjob kraftmigrationjob \
   --namespace confluent
 ```
 
-Check pods and wait for broker roll to complete:
+Check pods and wait for broker and KRaft controllers roll to complete:
 
 ```bash
 kubectl get pods
+```
+
+At the end you should see on the terminal monitoring the migration log:
+
+```
+message: KRaft Migration is completed, please follow these next steps:1. Download
+      the updated kafka and kRaftController CRsand Update your CI/CD or local representation
+      as necessary.2. Release the migration CR lock using following command (post
+      step 2) `kubectl annotate kmj <kmj-cr-name> -n <namespace> platform.confluent.io/kraft-migration-release-cr-lock=true
+      --overwrite`3. Zookeeper nodes won't be removed by CFK, Please make sure to
+      remove these nodes.
 ```
 
 # 8. Remove migration process lock on resources
