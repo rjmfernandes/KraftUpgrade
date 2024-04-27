@@ -80,6 +80,8 @@ kubectl apply -f 1-kafka-enable-trace-log.yaml
 
 # 2. Create KRaftController CRs
 
+(Note that we are creating the CRs not deplying the KRaft controller pods yet.)
+
 ```bash
 kubectl apply -f 2-controller.yaml
 ```
