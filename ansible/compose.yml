@@ -1,7 +1,5 @@
 ---
 # This docker-compose file will start some containers that act like VMs in a VPC
-version: '3.5'
-
 services:
   zk1:
     image: my-geerlingguy-docker-ubuntu-ansible:latest
