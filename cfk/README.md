@@ -108,7 +108,7 @@ kubectl get pods
 
 You should see pods for controllers getting created and pods restarting (here it's where the KRaft controllers are deployed).
 
-Finally on the terminal you were monitoring the migration process you should see:
+Finally on the terminal you were monitoring the migration process you should see (it may take some considerable amount of time):
 
 ```
 message: KRaft migration workflow in dual write mode. Kafka cluster is currently
