@@ -8,7 +8,7 @@ all:
     ssl_enabled: false
     confluent.platform.ssl_required: false
     ansible_python_interpreter: /usr/bin/python3
-    custom_java_path: /usr/lib/jvm/java-17-openjdk-arm64
+    custom_java_path: /usr/lib/jvm/java-17-openjdk-amd64
     
     #ansible_ssh_private_key_file: /tmp/certs/ssh_priv.pem
 
