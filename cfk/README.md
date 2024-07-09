@@ -10,6 +10,18 @@ Let's create cluster and deploy the dashboard:
 
 ```bash
 kind create cluster
+k apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml --context kind-kind
+k create serviceaccount -n kubernetes-dashboard admin-user
+k create clusterrolebinding -n kubernetes-dashboard admin-user --clusterrole cluster-admin --serviceaccount=kubernetes-dashboard:admin-user
+token=$(kubectl -n kubernetes-dashboard create token admin-user)
+echo $token
+k proxy
+```
+
+Use the token shown on response of command before to access the dashboard at:
+
+```bash
+open http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/\#/workloads\?namespace\=_all
 ```
 
 Set the default namespace confluent and install the operator:
