@@ -1,11 +1,8 @@
 ---
 # This docker-compose file will start some containers that act like VMs in a VPC
-x-base-image: &baseimage
-  image: my-geerlingguy-docker-ubuntu-ansible:latest
-  build: .
 services:
   zk1:
-    <<: *baseimage
+    image: my-geerlingguy-docker-ubuntu-ansible:latest
     hostname: zk1
     container_name: zk1 
     ports:
@@ -15,7 +12,7 @@ services:
     privileged: true
     cgroup: host
   zk2:
-    <<: *baseimage
+    image: my-geerlingguy-docker-ubuntu-ansible:latest
     hostname: zk2
     container_name: zk2
     ports:
@@ -25,7 +22,7 @@ services:
     privileged: true
     cgroup: host
   zk3:
-    <<: *baseimage
+    image: my-geerlingguy-docker-ubuntu-ansible:latest
     hostname: zk3
     container_name: zk3
     ports:
@@ -35,7 +32,7 @@ services:
     privileged: true
     cgroup: host
   kafka1:
-    <<: *baseimage
+    image: my-geerlingguy-docker-ubuntu-ansible:latest
     hostname: kafka1
     container_name: kafka1
     ports:
@@ -45,7 +42,7 @@ services:
     privileged: true
     cgroup: host
   kc1:
-    <<: *baseimage
+    image: my-geerlingguy-docker-ubuntu-ansible:latest
     hostname: kc1
     container_name: kc1 
     ports:
@@ -55,7 +52,7 @@ services:
     privileged: true
     cgroup: host
   kc2:
-    <<: *baseimage
+    image: my-geerlingguy-docker-ubuntu-ansible:latest
     hostname: kc2
     container_name: kc2 
     ports:
@@ -65,7 +62,7 @@ services:
     privileged: true
     cgroup: host
   kc3:
-    <<: *baseimage
+    image: my-geerlingguy-docker-ubuntu-ansible:latest
     hostname: kc3
     container_name: kc3 
     ports:
@@ -74,16 +71,3 @@ services:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
     privileged: true
     cgroup: host
-
-# We use this container to execute all ansible playbooks
-  ansible:
-    <<: *baseimage
-    hostname: ansible
-    container_name: ansible
-    command: "/usr/bin/bash -c \"sleep infinity\""
-    volumes:
-      #- ./cp-ansible:/etc/ansible:rw
-      - ./hosts.yml:/etc/ansible/hosts.yml:rw
-      - ./ansible.cfg:/etc/ansible/ansible.cfg:rw
-      # Required as ansible will use docker to control the other nodes
-      - /var/run/docker.sock:/var/run/docker.sock:rw
